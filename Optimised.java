@@ -96,15 +96,13 @@ public class Optimised {
         final List<String> tableList = new ArrayList<>();
         HashMap<String, Boolean> results = new HashMap<>();
         int count, temp;
-        
-        System.out.println("Start time - "+new Timestamp(System.currentTimeMillis()));
         Instant start = Instant.now();
 
         try {
             Class.forName("com.mysql.jdbc.Driver");
             Connection conn = DriverManager.getConnection(url, user, password);
-            DatabaseMetaData md = conn.getMetaData();
-            ResultSet rst = md.getTables(null, null, "%", null);
+            ResultSet rst = conn.getMetaData().getTables(null, null, "%", null);
+            
             String  col1, col2, sql1, sql2;
             while (rst.next()) 
               tableList.add(rst.getString(3));
@@ -112,24 +110,20 @@ public class Optimised {
             System.out.println("Got Table List - "+new Timestamp(System.currentTimeMillis()));
 
             for(int i = 0; i<tableList.size(); i++) {
-                Statement stmt = conn.createStatement();
                 System.out.println("Primary table "+tableList.get(i));
-                ResultSet rs = stmt.executeQuery("SELECT * FROM "+tableList.get(i));
+                ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM "+tableList.get(i));
 
-                ResultSetMetaData rsmd1 = rs.getMetaData();
-                for (int j = 0; j < rsmd1.getColumnCount(); j++) {
-                    col1 = rsmd1.getColumnName(j+1);
-                    Statement stmt1 = conn.createStatement();
+//              ResultSetMetaData rsmd1 = rs.getMetaData();
+                for (int j = 0; j < rs.getMetaData().getColumnCount(); j++) {
+                    col1 = rs.getMetaData().getColumnName(j+1);
                     System.out.println("Before getting the table list - "+new Timestamp(System.currentTimeMillis()));
 
                     sql1 = "select `"+col1+"` from "+tableList.get(i);
                     System.out.println("After getting the table list - "+new Timestamp(System.currentTimeMillis()));
 
-//                  if(col1.equals("address2") || col1.equals("original_language_id") || col1.equals("SUB_ID") || col1.equals("rental_id") || col1.equals("return_date") || col1.equals("picture") || col1.equals("password"))
-//                      continue;
                     System.out.println("SQL1 "+sql1);
                     System.out.println("Primary Column "+col1);
-                    ResultSet rs1 = stmt1.executeQuery(sql1);
+                    ResultSet rs1 = conn.createStatement().executeQuery(sql1);
                     temp = 0;
                     System.out.println("Before creating trie - "+new Timestamp(System.currentTimeMillis()));
 
@@ -143,21 +137,18 @@ public class Optimised {
                     System.out.println("After creating trie - "+new Timestamp(System.currentTimeMillis()));
                                     
                     for (int k = i+1; k < tableList.size(); k++) {
-                        Statement stmtt = conn.createStatement();
                         System.out.println("Secondary table "+tableList.get(k));
 
-                        ResultSet rss = stmtt.executeQuery("SELECT * FROM "+tableList.get(k));
-                        System.out.println("Recieved - "+new Timestamp(System.currentTimeMillis()));
+                        ResultSet rss = conn.createStatement().executeQuery("SELECT * FROM "+tableList.get(k));
+                        System.out.println("Received - "+new Timestamp(System.currentTimeMillis()));
 
-                        ResultSetMetaData rsmd2 = rss.getMetaData();
-                        for (int l = 0; l < rsmd2.getColumnCount(); l++) {
-                            col2 = rsmd2.getColumnName(l+1);
+                        for (int l = 0; l < rss.getMetaData().getColumnCount(); l++) {
+                            col2 = rss.getMetaData().getColumnName(l+1);
 
-                            Statement stmt2 = conn.createStatement();
                             sql2 = "select `"+col2+"` from "+tableList.get(k);
 //                          System.out.println("Secondary Column "+col2);
                             System.out.println("SQL2  "+sql2);
-                            ResultSet rs2 = stmt2.executeQuery(sql2);
+                            ResultSet rs2 = conn.createStatement().executeQuery(sql2);
                             toFind = new ArrayList<>();
                             while(rs2.next())
                             {
@@ -187,7 +178,6 @@ public class Optimised {
         }catch(Exception e) {
             e.printStackTrace();
         }
-        System.out.println("Completed at - "+new Timestamp(System.currentTimeMillis()));
         Instant end = Instant.now();
         Duration timeElapsed = Duration.between(start, end);
         System.out.println("Time taken: "+ timeElapsed.toMillis() +" milliseconds");
