@@ -2,17 +2,16 @@ package com.learn.logging.optimised;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+
 import com.learn.logging.logger.JobLogger;
 
-public class OptimisedMod {
+class OMThreadedIM{
 	Connection setConnection(String url, String user ,String password) {
 		//check for mysql and mssql and return connection objects accordingly
 		int i =1;
@@ -54,6 +53,7 @@ public class OptimisedMod {
 		HashMap<String, Boolean> results = new HashMap<>();
 		int count = 0;
 		JobLogger.getLogger().info(Optimised.class.getName(), "findMatches method", "Comparison for secondary column started");
+		
 		while (rs.next()) {
 			String param2 = rs.getString(col2);
 			if (param2 != null)
@@ -88,56 +88,20 @@ public class OptimisedMod {
 		System.out.println("\n\n");
 	}
 	
-	public static void main(String[] args) {
-		OptimisedMod obj = new OptimisedMod();
-		JobLogger.getLogger().info(Optimised.class.getName(), "main method", "Start");
-		String url = "jdbc:mysql://localhost:3306/employees",user = "root",password = "secret";
-		Connection conn = obj.setConnection(url, user, password);
-		final List<String> tableList = new ArrayList<>();
-		int size, pct;
-		Trie trie;
-		System.out.println("Started");
-		Instant start = Instant.now();
-
-		try {
-			if(conn!=null)
-				JobLogger.getLogger().info(Optimised.class.getName(), "main method", "Connection Established");
-			ResultSet rst = conn.getMetaData().getTables(null, null, "%", null);
-			String col1, col2, sql1, sql2;
-			while (rst.next())
-				tableList.add(rst.getString(3));
-			JobLogger.getLogger().info(Optimised.class.getName(), "main method", "Table List obtained");
-			rst = null;
-
-			for (int i = 0; i < tableList.size(); i++) {
-				ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM " + tableList.get(i));
-				rs.close();
-				for (int j = 0; j < rs.getMetaData().getColumnCount(); j++) {
-					col1 = rs.getMetaData().getColumnName(j + 1);
-					sql1 = "select `" + col1 + "` from " + tableList.get(i);
-					GetResults complex = obj.constructTrie(conn.createStatement().executeQuery(sql1), col1);
-					trie = complex.trie;
-					size = complex.size;
-					for (int k = i + 1; k < tableList.size(); k++) {
-						ResultSet rss = conn.createStatement().executeQuery("SELECT * FROM " + tableList.get(k));
-						for (int l = 0; l < rss.getMetaData().getColumnCount(); l++) {
-//							obj.garbageCollect();
-							col2 = rss.getMetaData().getColumnName(l + 1);
-							sql2 = "select `" + col2 + "` from " + tableList.get(k);
-							pct =obj.findMatches(trie, conn.createStatement().executeQuery(sql2), size, col2);
-							if (pct != -999)
-								JobLogger.getLogger().info(Optimised.class.getName(), "main method", tableList.get(i) + "." + col1 + " " + tableList.get(k) + "." + col2
-										+ " " + " = " + pct + "%");
-						}
-						rss = null;
-					}
-				}
-			}
-		} catch (Exception e) {
-			JobLogger.getLogger().info(Optimised.class.getName(),"main method",e.getMessage());
+	public ResultSet getRecords(Connection conn, String sqlQuery) throws SQLException{
+		System.out.println("\n" + sqlQuery);
+		PreparedStatement sql = conn.prepareStatement(sqlQuery,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY );
+		sql.setFetchSize(Integer.MIN_VALUE); 
+		ResultSet rs = sql.executeQuery();
+		
+		return rs;
+	}
+	public ArrayList<String> getColumnNames(ResultSet rs)throws SQLException {
+		ArrayList<String> colNames = new ArrayList<String>();
+		for (int j = 0; j < rs.getMetaData().getColumnCount(); j++) {
+			colNames.add(rs.getMetaData().getColumnName(j + 1));
 		}
-		Duration timeElapsed = Duration.between(start, Instant.now());
-		JobLogger.getLogger().info(Optimised.class.getName(), "main method", "Time elapsed "+timeElapsed);
-		System.out.println("Done");
+
+		return colNames;
 	}
 }

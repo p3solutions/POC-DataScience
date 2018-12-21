@@ -20,17 +20,17 @@ public class TableToTableAnalysisRetrieveData {
 		PrimaryTable priTabObject = obj.getPrimaryTable();
 //		String priTable =  priTabObject.getTableName();
 		List<ColumnDetails> primaryColumnList = priTabObject.getPrimaryColumnList();
-		pCList = new ArrayList();
+//		pCList = new ArrayList();
 		for(ColumnDetails i : primaryColumnList) {
 			pCList.add(i.getColumnName());
 		}
-		//fetching secondary table(s) details
-		List<SecondaryTable> secTabList = new ArrayList<>();
-		List<ColumnDetails> sCList = new ArrayList();
 		
+		//fetching secondary table(s) details
+		List<SecondaryTable> secTabList = obj.getSecondaryTableList();
+		List<ColumnDetails> sCList;
 		for(SecondaryTable i: secTabList) {
 			String secTabName = i.getTableName();
-			List<ColumnDetails> secColList = new ArrayList<>();
+			List<ColumnDetails> secColList = i.getSecondaryColumnList();;
 			sCList = i.getSecondaryColumnList();
 			List<String> l = new ArrayList<>();
 			for(ColumnDetails j : secColList) {
