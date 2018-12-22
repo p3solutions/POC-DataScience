@@ -49,7 +49,7 @@ class OMThreadedIM{
 
 		return(o);		
 	}
-	public int findMatches(Trie trie, ResultSet rs, int size, String col2) throws SQLException{
+	public void findMatches(Trie trie, ResultSet rs, int size, String col2, String table2, String tab1, String col1) throws SQLException{
 		HashMap<String, Boolean> results = new HashMap<>();
 		int count = 0;
 		JobLogger.getLogger().info(Optimised.class.getName(), "findMatches method", "Comparison for secondary column started");
@@ -67,10 +67,19 @@ class OMThreadedIM{
 				count++;
 			}
 		}
-		if(size!=0)
-			return (count * 100 / size);
+//		if(size!=0)
+//			return (count * 100 / size);
+//		else
+//			return -999;
+		if(size == 0)
+			System.out.println("NA");
 		else
-			return -999;
+			System.out.println(tab1+"."+col1+" "+table2+"."+col2  + (count * 100 / size) + "%");
+//			JobLogger.getLogger().info(Optimised.class.getName(), "main method", "table1.col1 "+table2+"."+col2  + (count * 100 / size) + "%");
+//		JobLogger.getLogger().info(Optimised.class.getName(), "main method", tableList.get(i) + "." + col1 + " " + tableList.get(k) + "." + col2
+//				+ " " + " = " + count * 100 / temp + "%");
+
+		
 	}
     public void printObjectSize(Object o) {
     	System.out.println("Object type: " + o.getClass() +
@@ -89,11 +98,10 @@ class OMThreadedIM{
 	}
 	
 	public ResultSet getRecords(Connection conn, String sqlQuery) throws SQLException{
-		System.out.println("\n" + sqlQuery);
+//		System.out.println("\n" + sqlQuery);
 		PreparedStatement sql = conn.prepareStatement(sqlQuery,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY );
 		sql.setFetchSize(Integer.MIN_VALUE); 
 		ResultSet rs = sql.executeQuery();
-		
 		return rs;
 	}
 	public ArrayList<String> getColumnNames(ResultSet rs)throws SQLException {
@@ -101,7 +109,6 @@ class OMThreadedIM{
 		for (int j = 0; j < rs.getMetaData().getColumnCount(); j++) {
 			colNames.add(rs.getMetaData().getColumnName(j + 1));
 		}
-
 		return colNames;
 	}
 }
