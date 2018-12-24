@@ -2,9 +2,11 @@ package com.learn.logging.optimised;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.learn.logging.logger.JobLogger;
@@ -14,21 +16,34 @@ public class OMThreaded {
 //	private static final int MAX_THREAD = 5;
 //	public static int threadcounter = 0;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException, SQLException {
 		OMThreadedIM obj = new OMThreadedIM();
-		JobLogger.getLogger().info(Optimised.class.getName(), "main method", "Start");
-		String url = "jdbc:mysql://localhost:3306/employees", user = "root", password = "secret";
-		Connection conn = obj.setConnection(url, user, password);
+		
+		JobLogger.getLogger().info(OMThreaded.class.getName(), "main method", "Start");
+//		String url = "jdbc:mysql://localhost:3306/sakila", user = "root", password = "secret";
+//		
+//		Connection conn = obj.setConnection(url, user, password);
+		CPDemo obj1 = new CPDemo();
+		Connection conn = null;
+
 		final List<String> tableList = new ArrayList<>();
 		int size;
+		
 		Trie trie;
+		
 		System.out.println("Started");
+		
 		Instant start = Instant.now();
+		
 		OMThreadedThread t1;
+		
+		List<Thread> threads = new LinkedList<>();
 
 		try {
+
+			conn =obj1.getConnectionFRomPool();
 			if (conn != null)
-				JobLogger.getLogger().info(Optimised.class.getName(), "main method", "Connection Established");
+				JobLogger.getLogger().info(OMThreaded.class.getName(), "main method", "Connection Established");
 			ResultSet rst = conn.getMetaData().getTables(null, null, "%", null);
 			String col1;
 			while (rst.next()) {
@@ -36,7 +51,8 @@ public class OMThreaded {
 //				System.out.println(rst.getString(3));
 			}
 
-			JobLogger.getLogger().info(Optimised.class.getName(), "main method", "Table List obtained");
+			JobLogger.getLogger().info(OMThreaded.class.getName(), "main method", "Table List obtained");
+	
 			rst = null;
 
 			for (int i = 0; i < tableList.size(); i++) {
@@ -59,7 +75,15 @@ public class OMThreaded {
 						rs = obj.getRecords(conn, secondaryTableQry);
 						ArrayList<String> secondaryColNames = obj.getColumnNames(rs);
 						rs.close();
-						t1 = new OMThreadedThread(secondaryColNames, tableList.get(k), trie, size, tableList.get(i), col1 );
+						for(String s : secondaryColNames) {
+							
+							t1 = new OMThreadedThread(s, tableList.get(k), trie, size, tableList.get(i), col1, obj1 );
+//					        Worker work = new Worker(4);
+//					        work.Execute(t1);
+
+							t1.start();
+							threads.add(t1);
+						}
 //						t1.setCurrentThreadName(t1.getName());
 //						common.addThread(t1.getName());
 						
@@ -68,18 +92,21 @@ public class OMThreaded {
 //						while (common.threadList.size() >= MAX_THREAD) {
 //							System.out.println("sleeping");
 //							Thread.sleep(1);}
-						t1.start();
+//						t1.start();
 					}
 					t1 = null;
 				}
 			}
 		} catch (Exception e) {
-			JobLogger.getLogger().info(Optimised.class.getName(), "main method", e.getMessage());
+			JobLogger.getLogger().info(OMThreaded.class.getName(), "main method", e.getMessage());
 			System.out.println(e.getMessage());
 		}
 		Duration timeElapsed = Duration.between(start, Instant.now());
-//		JobLogger.getLogger().info(Optimised.class.getName(), "main method", "Time elapsed " + timeElapsed);
+//		JobLogger.getLogger().info(OMThreaded.class.getName(), "main method", "Time elapsed " + timeElapsed);
 		System.out.println("timeElapsed "+timeElapsed);
+		for(Thread t : threads) {
+			t.join();
+		}
 		System.out.println("Done");
 	}
 }

@@ -1,7 +1,6 @@
 package com.learn.logging.optimised;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,27 +11,27 @@ import java.util.Map;
 import com.learn.logging.logger.JobLogger;
 
 class OMThreadedIM{
-	Connection setConnection(String url, String user ,String password) {
-		//check for mysql and mssql and return connection objects accordingly
-		int i =1;
-		try {
-			if(i == 1) {
-				Class.forName("com.mysql.jdbc.Driver");
-				return DriverManager.getConnection(url, user, password);				
-			}
-			else {
-	        	Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver").newInstance();
-	            return DriverManager.getConnection("jdbc:sqlserver://34.213.4.182:57997;databaseName=PS_FINANCE", "sa", "secret@P3");
-
-			}
-		}catch (Exception e) {
-			JobLogger.getLogger().info(Optimised.class.getName(),"setConnection",e.getMessage());
-			return null;
-		}
-	}
+//	Connection setConnection(String url, String user ,String password) {
+//		//check for mysql and mssql and return connection objects accordingly
+//		int i =1;
+//		try {
+//			if(i == 1) {
+//				Class.forName("com.mysql.jdbc.Driver");
+//				return DriverManager.getConnection(url, user, password);				
+//			}
+//			else {
+//	        	Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver").newInstance();
+//	            return DriverManager.getConnection("jdbc:sqlserver://34.213.4.182:57997;databaseName=PS_FINANCE", "sa", "secret@P3");
+//
+//			}
+//		}catch (Exception e) {
+//			JobLogger.getLogger().info(Optimised.class.getName(),"setConnection",e.getMessage());
+//			return null;
+//		}
+//	}
 
 	public GetResults constructTrie(ResultSet rs1, String col1) throws SQLException {
-		JobLogger.getLogger().info(Optimised.class.getName(), "constructTrie", "Before creating trie");
+//		JobLogger.getLogger().info(Optimised.class.getName(), "constructTrie", "Before creating trie");
 		int size = 0;
 		Trie trie = new Trie();
 		while (rs1.next()) {
@@ -45,14 +44,15 @@ class OMThreadedIM{
 		GetResults o = new GetResults();
 		o.trie =trie;
 		o.size = size;
-		JobLogger.getLogger().info(Optimised.class.getName(), "constructTrie", "After creating trie");
+//		JobLogger.getLogger().info(Optimised.class.getName(), "constructTrie", "After creating trie");
 
 		return(o);		
 	}
+	@SuppressWarnings("rawtypes")
 	public void findMatches(Trie trie, ResultSet rs, int size, String col2, String table2, String tab1, String col1) throws SQLException{
 		HashMap<String, Boolean> results = new HashMap<>();
 		int count = 0;
-		JobLogger.getLogger().info(Optimised.class.getName(), "findMatches method", "Comparison for secondary column started");
+//		JobLogger.getLogger().info(Optimised.class.getName(), "findMatches method", "Comparison for secondary column started");
 		
 		while (rs.next()) {
 			String param2 = rs.getString(col2);
@@ -72,19 +72,16 @@ class OMThreadedIM{
 //		else
 //			return -999;
 		if(size == 0)
-			System.out.println("NA");
+			JobLogger.getLogger().info(OMThreadedIM.class.getName(), "OUTSIDE", tab1+"."+col1+" "+table2+"."+col2  + "NA");
 		else
-			System.out.println(tab1+"."+col1+" "+table2+"."+col2  + (count * 100 / size) + "%");
-//			JobLogger.getLogger().info(Optimised.class.getName(), "main method", "table1.col1 "+table2+"."+col2  + (count * 100 / size) + "%");
+//			System.out.println(tab1+"."+col1+" "+table2+"."+col2  + (count * 100 / size) + "%");
+			JobLogger.getLogger().info(OMThreadedIM.class.getName(), "OUTSIDE", tab1+"."+col1+" "+table2+"."+col2  + (count * 100 / size) + "%");
 //		JobLogger.getLogger().info(Optimised.class.getName(), "main method", tableList.get(i) + "." + col1 + " " + tableList.get(k) + "." + col2
 //				+ " " + " = " + count * 100 / temp + "%");
 
 		
 	}
-    public void printObjectSize(Object o) {
-    	System.out.println("Object type: " + o.getClass() +
-    	          ", size: " + InstrumentationAgent.getObjectSize(o) + " bytes");   
-    	}
+
 	public void garbageCollect() {
 		System.out.println(" >> GC triggered");
 		System.out.println(" Before GC :\t MAX : " + (Runtime.getRuntime().maxMemory() / 1048576) + " MB \t TOTAL : "
