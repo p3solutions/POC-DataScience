@@ -3,6 +3,7 @@ package com.learn.logging.optimised;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,7 +59,6 @@ class OMThreadedIM{
 			String param2 = rs.getString(col2);
 			if (param2 != null)
 				results.put(param2, trie.search(param2));
-
 		}
 
 
@@ -72,10 +72,10 @@ class OMThreadedIM{
 //		else
 //			return -999;
 		if(size == 0)
-			JobLogger.getLogger().info(OMThreadedIM.class.getName(), "OUTSIDE", tab1+"."+col1+" "+table2+"."+col2  + "NA");
+			JobLogger.getLogger().info(OMThreadedIM.class.getName(), "OUTSIDE", tab1+"."+col1+" "+table2+"."+col2  + " NA");
 		else
 //			System.out.println(tab1+"."+col1+" "+table2+"."+col2  + (count * 100 / size) + "%");
-			JobLogger.getLogger().info(OMThreadedIM.class.getName(), "OUTSIDE", tab1+"."+col1+" "+table2+"."+col2  + (count * 100 / size) + "%");
+			JobLogger.getLogger().info(OMThreadedIM.class.getName(), "findMatches", tab1+"."+col1+" "+table2+"."+col2  + "  "+(count * 100 / size) + "%");
 //		JobLogger.getLogger().info(Optimised.class.getName(), "main method", tableList.get(i) + "." + col1 + " " + tableList.get(k) + "." + col2
 //				+ " " + " = " + count * 100 / temp + "%");
 
@@ -95,17 +95,70 @@ class OMThreadedIM{
 	}
 	
 	public ResultSet getRecords(Connection conn, String sqlQuery) throws SQLException{
-//		System.out.println("\n" + sqlQuery);
+//		System.out.println("SQL2 : " + sqlQuery);
 		PreparedStatement sql = conn.prepareStatement(sqlQuery,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY );
-		sql.setFetchSize(Integer.MIN_VALUE); 
+//		sql.setFetchSize(Integer.MIN_VALUE); 
 		ResultSet rs = sql.executeQuery();
 		return rs;
 	}
 	public ArrayList<String> getColumnNames(ResultSet rs)throws SQLException {
 		ArrayList<String> colNames = new ArrayList<String>();
-		for (int j = 0; j < rs.getMetaData().getColumnCount(); j++) {
-			colNames.add(rs.getMetaData().getColumnName(j + 1));
+		ResultSetMetaData rsmd = rs.getMetaData();
+		String type;
+		for (int j = 1; j < rsmd.getColumnCount(); j++) {
+			type = rsmd.getColumnTypeName(j);
+			if(isallowedtype(type)==true)
+				colNames.add(rsmd.getColumnName(j));
+//			else
+//				System.out.println("TYPE : "+type+" ColName : "+rsmd.getColumnName(j));
 		}
 		return colNames;
 	}
+	
+//	public boolean isTypeMatchFound(String col1, String col2) {}
+	
+	public boolean isallowedtype(String DataType) {
+		switch (DataType.toUpperCase()) {
+		case "BLOB":
+		case "TINYBLOB":
+		case "MEDIUMBLOB":
+		case "LONGBLOB":
+		case "VARBINARY":
+		case "NVARBINARY":
+		case "IMAGE":
+		case "PHOTO":
+		case "BIT":
+		case "BOOLEAN":
+		case "MONEY":
+		case "CURRENCY":
+		case "SMALLMONEY":
+		case "BINARY_BOUBLE":
+		case "BINARY_FLOAT":
+		case "DOUBLE_PRECISION":
+		case "DOUBLE PRECISION":
+		case "BINARY VARYING":
+		case "TIME":
+		case "TIMESTAMP":
+		case "INTERVAL":
+		case "TIMESTAMP WITH LOCAL TIME ZONE":
+		case "TIMESTAMP WITH TIME ZONE":
+		case "DATETIME":
+		case "DATETIME2":
+		case "SMALLDATETIME":
+		case "DATETIMEOFFSET":
+		case "DATE":
+		case "RAW":
+		case "LONG RAW":
+			return false;
+		default:
+			return true;
+		}
+	}
 }
+
+
+
+
+
+
+
