@@ -147,6 +147,7 @@ public class OMThreaded {
 //					System.out.println("column 1"+col1);
 					String colDataFetchQry = "select `" + col1 + "` from " + tableList.get(i);
 //					String colDataFetchQry = "select " + col1 + " from " + tableList.get(i);
+	                String type1 = (String)((HashMap) details1.get("columns")).get(col1);
 
 					rs = obj.getRecords(conn, colDataFetchQry);
 					GetResults complex = obj.constructTrie(rs, col1);
@@ -168,14 +169,16 @@ public class OMThreaded {
 		                	colNames2.add(st);
 		                }
 
+
 						rs.close();
 						for(String col2 : colNames2) {
 //							System.out.println("Column2 "+col2);
-							t1 = new OMThreadedThread(col2, tableList.get(k), trie, size, tableList.get(i), col1, obj1 );
-
-							
-							t1.start();
-							threads.add(t1);
+			                String type2 = (String)((HashMap) details2.get("columns")).get(col2);
+			                if(type1.equals(type2)) {
+								t1 = new OMThreadedThread(col2, tableList.get(k), trie, size, tableList.get(i), col1, obj1 );
+								t1.start();
+								threads.add(t1);
+			                }
 						}
 					}
 					t1 = null;
