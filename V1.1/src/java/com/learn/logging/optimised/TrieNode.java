@@ -7,7 +7,7 @@ class TrieNode {
 	char content;
 	boolean isEnd;
 	int count;
-	ArrayList<TrieNode> childList;
+	ArrayList<TrieNode> childList; //atleast use hashmap
 
 	public TrieNode(char c) {
 		childList = new ArrayList<TrieNode>();

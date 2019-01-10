@@ -1,63 +1,63 @@
 package com.learn.logging.optimised;
-
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class GenerateMetadata {
-	static Connection conn;
-
-	public GenerateMetadata(Connection conn) throws SQLException, ClassNotFoundException {
-//		String url = "jdbc:mysql://localhost:3306/sakila";
-//		String user = "root";
-//		String password = "secret";
-//		Class.forName("com.mysql.jdbc.Driver");
-//		conn = DriverManager.getConnection(url, user, password);
+	Connection conn;
+	public GenerateMetadata(Connection conn) {
 		this.conn = conn;
 	}
+	public void generate() {
+		ArrayList<Thread> threads = new ArrayList<>();
 
-	@SuppressWarnings("unchecked")
-	public void generate() throws ClassNotFoundException, SQLException, FileNotFoundException {
-		Map<String, String> hm = new HashMap<String, String>();
-		String t;
-		OMThreadedIM selfObj = new OMThreadedIM();
-		ResultSet rst = conn.getMetaData().getTables(null, null, "%", null);
-		int rowCount = 0;
-		if (conn != null)
-			System.out.println("Established connection");
-		JSONObject jo = new JSONObject(), k = new JSONObject(), f = new JSONObject();
+		try {
+			ResultSet rst = conn.getMetaData().getTables(null, null, "%", null);
+			int tnum=0;
+			while (rst.next()) {
+				tnum++;
+			}
+			System.out.println("Total No of tables = "+tnum);
+			int nList = 9; int listSize = 10000; 
+//			int nList = 3; int listSize = 10; 
 
-		JSONArray jao = null;
-		PrintWriter pw = null;
-		Map element = null;
-		pw = new PrintWriter("md.json");
-		while (rst.next()) {
+			rst = conn.getMetaData().getTables(null, null, "%", null);
 			
-			element = new LinkedHashMap(2);
-			t = rst.getString(3);
-			jao = new JSONArray();
-			String stmt = "SELECT * FROM " + t;
-			ResultSet rs = selfObj.getRecords(conn, stmt);
-			hm = selfObj.getColumnNames(rs);
-			rowCount = selfObj.getRowCount(conn, t);
-			element.put("columns", hm);
-			element.put("rowcount", rowCount);
-			k.put(t, element);
-			jao.add(k);
+			List<List<String>> lists = new ArrayList<List<String>>();
+			RunClass th[] = new RunClass[nList];
+
+			for(int i = 0; i <nList; i++) {
+				List<String> innerList = new ArrayList<String>();
+
+				for(int j = 0; j< listSize; j++) {
+					if(rst.next()){
+						String t = rst.getString(3);
+						innerList.add(t);
+					}
+				}
+				lists.add(i, innerList);
+
+			}
+	        CountDownLatch latch = new CountDownLatch(nList); 
+
+			for(int i = 0 ;i<nList;i++) {
+				th[i] = new RunClass(conn, lists.get(i), i, latch);
+				threads.add(th[i]);
+				th[i].start();
+			}
+			latch.await();
+			System.out.println("Generate has finished"); 
+			
+//			for(Thread t : threads) {
+//				t.join();
+//			}
+		}catch (Exception e) {
+			System.out.println(e);
+			e.printStackTrace();
 		}
-		jo.put("table", k);	
-		pw.write(jo.toJSONString());
-
-		pw.flush();
-		pw.close();
-
 	}
 }
